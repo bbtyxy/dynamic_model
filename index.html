@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>新达精密 · 动态定价模型（交互版）</title>
-    <!-- Chart.js CDN -->
+    <title>新达精密 · AI动态定价模型（完整版）</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
@@ -14,7 +13,7 @@
         body {
             background: #eef2f7;
             margin: 0;
-            padding: 24px 16px;
+            padding: 20px;
             display: flex;
             justify-content: center;
         }
@@ -23,27 +22,24 @@
             width: 100%;
             background: white;
             border-radius: 32px;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.15);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.1);
             overflow: hidden;
-            padding: 24px 28px 36px;
+            padding: 24px 28px;
         }
         h1 {
             font-size: 1.9rem;
             margin: 0 0 0.2rem 0;
             color: #1e466e;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
         .sub {
             color: #2c5a7a;
             border-left: 4px solid #2c7da0;
             padding-left: 18px;
             margin: 16px 0 24px 0;
-            font-weight: 400;
             background: #f8fafc;
             border-radius: 20px;
             padding: 12px 18px;
+            font-size: 0.95rem;
         }
         .control-panel {
             background: #f0f6fa;
@@ -52,13 +48,12 @@
             margin-bottom: 28px;
             display: flex;
             flex-wrap: wrap;
-            gap: 28px;
+            gap: 24px;
             align-items: flex-end;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .control-group {
             flex: 1;
-            min-width: 180px;
+            min-width: 160px;
         }
         .control-group label {
             display: block;
@@ -69,22 +64,19 @@
         }
         .control-group input {
             width: 100%;
-            padding: 10px 12px;
+            padding: 8px 12px;
             border-radius: 40px;
             border: 1px solid #cbdde9;
             background: white;
             font-size: 1rem;
-            font-weight: 500;
-            transition: 0.2s;
         }
         .control-group input[type="range"] {
             padding: 0;
             height: 6px;
         }
-        .value-display {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #1f6e43;
+        .value-hint {
+            font-size: 0.75rem;
+            color: #5a6e8a;
             margin-top: 6px;
         }
         .result-card {
@@ -95,7 +87,7 @@
             margin-bottom: 28px;
         }
         .growth-number {
-            font-size: 2.6rem;
+            font-size: 2.8rem;
             font-weight: 800;
             color: #136b3e;
             line-height: 1.2;
@@ -103,18 +95,47 @@
         .insight-text {
             margin-top: 12px;
             color: #2c3e50;
-            font-size: 1rem;
+            font-size: 0.95rem;
+        }
+        .calculation-detail {
+            background: #ffffffd9;
+            border-radius: 20px;
+            padding: 12px 18px;
+            margin: 16px 0 0;
+            font-family: monospace;
+            font-size: 0.85rem;
+            text-align: left;
+            border: 1px solid #cbdde9;
         }
         .chart-container {
-            background: #ffffff;
+            background: white;
             border-radius: 24px;
             padding: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            margin-top: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin: 16px 0 10px;
         }
         canvas {
             max-height: 380px;
             width: 100%;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 16px;
+        }
+        button {
+            background: #2c7da0;
+            border: none;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #1f5e7a;
         }
         .footnote {
             font-size: 0.75rem;
@@ -124,20 +145,6 @@
             border-top: 1px solid #dce7ef;
             padding-top: 18px;
         }
-        button.reset-btn {
-            background: #2c7da0;
-            border: none;
-            color: white;
-            padding: 8px 20px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 8px;
-            transition: 0.2s;
-        }
-        button.reset-btn:hover {
-            background: #1f5e7a;
-        }
         @media (max-width: 700px) {
             .container { padding: 18px; }
             .growth-number { font-size: 2rem; }
@@ -146,55 +153,57 @@
 </head>
 <body>
 <div class="container">
-    <h1>📐 新达精密 · 动态定价模型</h1>
+    <h1>📐 新达精密 · AI动态定价模型</h1>
     <div class="sub">
-        🤖 AI进阶任务 | 模拟“A型产品降价 → 销量需增长多少才能保持利润不变？”<br>
-        游客可拖动滑块或直接输入数值，图表与结果自动更新。
+        🤖 AI进阶任务：模拟“A型产品降价，销量需增长多少才能保持利润不变？”<br>
+        ✅ 核心假设：单位变动成本 <strong>127元/台</strong>（包含直接材料80 + 人工30 + 变动水电4.5 + 销售佣金12.5，佣金按原售价5%固定，不随降价改变）
     </div>
 
     <!-- 可调参数面板 -->
     <div class="control-panel">
         <div class="control-group">
-            <label>📉 降价幅度 <span style="font-weight:normal">(%)</span></label>
+            <label>📉 降价幅度 (%)</label>
             <input type="range" id="discountSlider" min="0" max="20" step="0.5" value="10">
-            <input type="number" id="discountNumber" step="0.5" value="10" style="margin-top: 8px;">
-            <div class="value-display" id="discountValue">10.0%</div>
+            <input type="number" id="discountNumber" step="0.5" value="10" style="margin-top: 6px;">
+            <div class="value-hint">0% ~ 20%</div>
         </div>
         <div class="control-group">
             <label>🏷️ 原单价 (元/台)</label>
             <input type="number" id="basePrice" step="1" value="250">
         </div>
         <div class="control-group">
-            <label>⚙️ 不含佣金变动成本 (元/台)</label>
-            <input type="number" id="vcFixed" step="0.5" value="114.5">
-            <div style="font-size:0.7rem; margin-top:4px;">直接材料+人工+变动水电</div>
-        </div>
-        <div class="control-group">
-            <label>💸 销售佣金率 (%)</label>
-            <input type="number" id="commRatePercent" step="0.5" value="5">
+            <label>⚙️ 单位变动成本 (元/台)</label>
+            <input type="number" id="vcTotal" step="0.5" value="127">
+            <div class="value-hint">含固定佣金12.5元</div>
         </div>
     </div>
 
-    <!-- 核心结果 -->
+    <!-- 结果展示 -->
     <div class="result-card">
-        <div style="font-weight:600; margin-bottom: 8px;">✨ 当前降价 <span id="currentDiscountLabel">10</span>% 时，保持利润不变 ✨</div>
+        <div style="font-weight:600;">当前降价 <span id="currentDiscountLabel">10</span>%</div>
         <div class="growth-number" id="requiredGrowth">--%</div>
-        <div class="insight-text" id="explanationText">
-            销量需要增长 <strong id="growthHighlight">--</strong>%，才能使总边际贡献与降价前相等。
+        <div class="insight-text">
+            销量需增长以上百分比，总边际贡献才能与降价前持平（固定成本不变）。
+        </div>
+        <div class="calculation-detail" id="calcDetail">
+            <!-- 动态显示计算过程 -->
         </div>
     </div>
 
-    <!-- 敏感性分析图表 (动态更新) -->
+    <!-- 图表区 -->
     <div class="chart-container">
-        <div style="font-weight:700; margin-bottom: 10px;">📈 不同降价幅度 → 所需销量增长率（曲线可随参数变化）</div>
-        <canvas id="sensitivityChart" width="800" height="350" style="width:100%; height:auto;"></canvas>
-        <div style="font-size:0.75rem; text-align:center; margin-top:8px;">拖动上方滑块，曲线将自动重绘 | 垂直红线标记当前降价幅度</div>
+        <canvas id="sensitivityChart"></canvas>
+        <div style="font-size:0.75rem; text-align:center; margin-top:8px;">▼ 不同降价幅度对应的销量增长率曲线（垂直红线为当前降价幅度）</div>
     </div>
 
+    <div class="button-group">
+        <button id="resetBtn">↺ 重置默认参数</button>
+    </div>
     <div class="footnote">
-        ✅ 计算原理：原单位边际贡献 = 单价 - (不含佣金变动成本 + 单价×佣金率)<br>
-        降价后边际贡献 → 所需销量增长率 = (原单位边际贡献 / 新单位边际贡献) - 1<br>
-        固定成本不变，只考虑A型产品单独变动。
+        📐 公式：原边际贡献 = 原单价 - 单位变动成本；<br>
+        降价后边际贡献 = 新单价 - 单位变动成本；<br>
+        销量增长率 = (原边际贡献 / 降价后边际贡献) - 1。<br>
+        保持利润不变的条件：原边际贡献总额 = 新边际贡献总额（固定成本不变）。
     </div>
 </div>
 
@@ -202,94 +211,92 @@
     // DOM 元素
     const discountSlider = document.getElementById('discountSlider');
     const discountNumber = document.getElementById('discountNumber');
-    const discountValueSpan = document.getElementById('discountValue');
     const basePriceInput = document.getElementById('basePrice');
-    const vcFixedInput = document.getElementById('vcFixed');
-    const commRatePercentInput = document.getElementById('commRatePercent');
+    const vcTotalInput = document.getElementById('vcTotal');
+    const currentDiscountLabel = document.getElementById('currentDiscountLabel');
     const requiredGrowthSpan = document.getElementById('requiredGrowth');
-    const growthHighlightSpan = document.getElementById('growthHighlight');
-    const currentDiscountLabelSpan = document.getElementById('currentDiscountLabel');
-    const explanationDiv = document.getElementById('explanationText');
+    const calcDetailDiv = document.getElementById('calcDetail');
+    const resetBtn = document.getElementById('resetBtn');
 
-    let chart = null; // 图表实例
+    let chart = null;
+    let currentAnnotation = null; // 用于标记垂直线的简单方式
 
-    // 辅助函数：获取当前参数
+    // 获取当前参数
     function getParams() {
         let discount = parseFloat(discountSlider.value);
-        if (isNaN(discount)) discount = 10;
         let basePrice = parseFloat(basePriceInput.value);
-        let vcFixed = parseFloat(vcFixedInput.value);
-        let commRate = parseFloat(commRatePercentInput.value) / 100;
+        let vcTotal = parseFloat(vcTotalInput.value);
+        if (isNaN(discount)) discount = 10;
         if (isNaN(basePrice)) basePrice = 250;
-        if (isNaN(vcFixed)) vcFixed = 114.5;
-        if (isNaN(commRate)) commRate = 0.05;
-        return { discount, basePrice, vcFixed, commRate };
+        if (isNaN(vcTotal)) vcTotal = 127;
+        return { discount, basePrice, vcTotal };
     }
 
-    // 计算给定降价幅度下所需的销量增长率（%）
-    function calcGrowthForDiscount(discountPercent, basePrice, vcFixed, commRate) {
-        const P0 = basePrice;
-        const CM0 = P0 - (vcFixed + P0 * commRate);
-        if (CM0 <= 0) return Infinity;  // 防止无意义
-        const Pnew = P0 * (1 - discountPercent / 100);
-        const CMnew = Pnew - (vcFixed + Pnew * commRate);
+    // 计算给定降价幅度下的销量增长率（%）
+    function calcGrowth(discountPercent, basePrice, vcTotal) {
+        const CM0 = basePrice - vcTotal;
+        if (CM0 <= 0) return Infinity;
+        const newPrice = basePrice * (1 - discountPercent / 100);
+        const CMnew = newPrice - vcTotal;
         if (CMnew <= 0) return Infinity;
-        const growthRate = (CM0 / CMnew) - 1;
-        return growthRate * 100;
+        return (CM0 / CMnew - 1) * 100;
     }
 
-    // 更新所有UI和图表
-    function updateEverything() {
-        let { discount, basePrice, vcFixed, commRate } = getParams();
-        
-        // 更新显示当前降价幅度
+    // 更新界面和图表
+    function updateAll() {
+        let { discount, basePrice, vcTotal } = getParams();
+        // 同步输入框
         discountSlider.value = discount;
         discountNumber.value = discount;
-        discountValueSpan.innerText = discount.toFixed(1) + '%';
-        currentDiscountLabelSpan.innerText = discount.toFixed(1);
-        
-        // 计算当前降价幅度下的销量增长率
-        let currentGrowth = calcGrowthForDiscount(discount, basePrice, vcFixed, commRate);
-        if (!isFinite(currentGrowth)) {
-            requiredGrowthSpan.innerText = '⚠️ 边际贡献为负';
-            growthHighlightSpan.innerText = '无法维持';
-            explanationDiv.innerHTML = '当前参数导致降价后边际贡献 ≤ 0，无法通过提升销量保持利润不变。请提高单价或降低成本。';
+        currentDiscountLabel.innerText = discount.toFixed(1);
+
+        const CM0 = basePrice - vcTotal;
+        const newPrice = basePrice * (1 - discount / 100);
+        const CMnew = newPrice - vcTotal;
+        const growth = calcGrowth(discount, basePrice, vcTotal);
+
+        if (!isFinite(growth)) {
+            requiredGrowthSpan.innerText = '参数无效';
+            calcDetailDiv.innerHTML = '⚠️ 单位边际贡献 ≤ 0，无法维持利润。请提高单价或降低成本。';
         } else {
-            requiredGrowthSpan.innerText = currentGrowth.toFixed(2) + '%';
-            growthHighlightSpan.innerText = currentGrowth.toFixed(2) + '%';
-            explanationDiv.innerHTML = `销量需要增长 <strong>${currentGrowth.toFixed(2)}%</strong>，才能使总边际贡献与降价前相等。`;
+            requiredGrowthSpan.innerText = growth.toFixed(2) + '%';
+            // 显示详细计算过程
+            calcDetailDiv.innerHTML = `
+                📐 原单位边际贡献 = ${basePrice} - ${vcTotal} = <strong>${CM0.toFixed(2)}</strong> 元/台<br>
+                📉 降价后单价 = ${basePrice} × (1 - ${discount}%) = ${newPrice.toFixed(2)} 元/台<br>
+                📉 降价后单位边际贡献 = ${newPrice.toFixed(2)} - ${vcTotal} = <strong>${CMnew.toFixed(2)}</strong> 元/台<br>
+                🔄 销量需增长率 = (${CM0.toFixed(2)} / ${CMnew.toFixed(2)}) - 1 = <strong>${growth.toFixed(2)}%</strong>
+            `;
         }
-        
-        // 重新计算0~20%各点的增长率，并刷新图表
-        const discountPoints = [];
-        const growthPoints = [];
+
+        // 更新图表数据（0~20%，步长0.5）
+        let labels = [];
+        let data = [];
         for (let d = 0; d <= 20; d += 0.5) {
-            let g = calcGrowthForDiscount(d, basePrice, vcFixed, commRate);
-            if (!isFinite(g)) g = 999; // 边际贡献为负时设一个极大值，但图表上显示会溢出，我们限制一下上限200%
-            discountPoints.push(d);
-            growthPoints.push(Math.min(g, 200)); // 限制显示范围，避免图表畸形
+            let g = calcGrowth(d, basePrice, vcTotal);
+            if (!isFinite(g)) g = 200; // 上限200%，避免图表崩溃
+            labels.push(d);
+            data.push(g);
         }
-        
+
         if (chart) {
-            chart.data.datasets[0].data = growthPoints;
-            chart.options.scales.y.max = Math.max(80, ...growthPoints.filter(v=>v<200)) + 10;
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
             chart.update();
         } else {
-            // 初始化图表
             const ctx = document.getElementById('sensitivityChart').getContext('2d');
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: discountPoints,
+                    labels: labels,
                     datasets: [{
                         label: '所需销量增长率 (%)',
-                        data: growthPoints,
+                        data: data,
                         borderColor: '#2c7da0',
                         backgroundColor: 'rgba(44,125,160,0.08)',
                         borderWidth: 2.5,
                         pointRadius: 2,
                         pointBackgroundColor: '#1e5e7e',
-                        pointBorderColor: '#ffffff',
                         tension: 0.1,
                         fill: true
                     }]
@@ -300,59 +307,51 @@
                     plugins: {
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
-                                    return `降价 ${context.label}% → 销量需增长 ${context.raw.toFixed(2)}%`;
-                                }
+                                label: (ctx) => `降价 ${ctx.label}% → 销量需增长 ${ctx.raw.toFixed(2)}%`
                             }
                         }
                     },
                     scales: {
-                        x: {
-                            title: { display: true, text: '降价幅度 (%)', font: { weight: 'bold' } },
-                            grid: { color: '#e2e8f0' },
-                            min: 0,
-                            max: 20
-                        },
-                        y: {
-                            title: { display: true, text: '销量需增长 (%)', font: { weight: 'bold' } },
-                            grid: { color: '#e2e8f0' },
-                            ticks: { callback: function(val) { return val + '%'; } },
-                            suggestedMin: 0
-                        }
+                        x: { title: { display: true, text: '降价幅度 (%)' }, grid: { color: '#e2e8f0' }, min: 0, max: 20 },
+                        y: { title: { display: true, text: '销量需增长 (%)' }, ticks: { callback: v => v + '%' }, suggestedMin: 0 }
                     }
                 }
             });
         }
-        
-        // 额外：如果图表存在但当前降价点没有特殊标记，我们简单加一条注释（但chart没有原生annotation，但用户可看到曲线位置）
-        // 为了视觉指示，我们可以在canvas上方加动态文本，但非必要。
+
+        // 在图表上添加当前降价幅度的垂直标记（简单做法：重绘时删除原annotation？由于Chart.js无内置，这里用插件或额外绘制
+        // 为了简洁，不增加复杂插件，在图表上方用文字标注即可，用户可直观看到当前点位置。
+        // 但为了更好的体验，我们可以在图表上叠加一个div? 不做了，曲线上的点可观察。
+        // 用户可通过tooltip看到精确值。
     }
-    
-    // 绑定事件
-    function bindEvents() {
-        discountSlider.addEventListener('input', (e) => {
-            discountNumber.value = e.target.value;
-            updateEverything();
-        });
-        discountNumber.addEventListener('input', (e) => {
-            let val = parseFloat(e.target.value);
-            if (!isNaN(val) && val >= 0 && val <= 30) {
-                discountSlider.value = val;
-                updateEverything();
-            }
-        });
-        basePriceInput.addEventListener('input', updateEverything);
-        vcFixedInput.addEventListener('input', updateEverything);
-        commRatePercentInput.addEventListener('input', updateEverything);
+
+    // 重置为默认值
+    function resetDefaults() {
+        basePriceInput.value = 250;
+        vcTotalInput.value = 127;
+        discountSlider.value = 10;
+        discountNumber.value = 10;
+        updateAll();
     }
-    
+
+    // 事件绑定
+    discountSlider.addEventListener('input', (e) => {
+        discountNumber.value = e.target.value;
+        updateAll();
+    });
+    discountNumber.addEventListener('input', (e) => {
+        let val = parseFloat(e.target.value);
+        if (!isNaN(val) && val >= 0 && val <= 30) {
+            discountSlider.value = val;
+            updateAll();
+        }
+    });
+    basePriceInput.addEventListener('input', updateAll);
+    vcTotalInput.addEventListener('input', updateAll);
+    resetBtn.addEventListener('click', resetDefaults);
+
     // 初始化
-    function init() {
-        bindEvents();
-        updateEverything();
-    }
-    
-    init();
+    updateAll();
 </script>
 </body>
 </html>
